@@ -1,0 +1,53 @@
+package com.example.library.security;
+
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+@Service
+public class JwtService {
+
+    private final String SECRET =
+            "mySecretKeyForLibraryApplicationJwtAuthentication123456";
+
+    private final SecretKey key =
+            Keys.hmacShaKeyFor(SECRET.getBytes());
+
+    public String generateToken(String username, String role) {
+
+        return Jwts.builder()
+                .subject(username)
+                .claim("role", role)
+                .issuedAt(new Date())
+                .expiration(
+                        new Date(System.currentTimeMillis() + 3600000)
+                )
+                .signWith(key)
+                .compact();
+    }
+
+    public String extractUsername(String token) {
+
+        return getClaims(token).getSubject();
+    }
+
+    public String extractRole(String token) {
+
+        return getClaims(token).get("role", String.class);
+    }
+
+    private Claims getClaims(String token) {
+
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+}
